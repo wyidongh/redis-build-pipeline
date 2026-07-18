@@ -57,7 +57,7 @@ pipeline {
 		    script {
 
 			env.GIT_COMMIT_ID = sh(
-			    script:"git rev-parse --short HEAD",
+			    script:"git rev-parse --short=7 HEAD",
 			    returnStdout:true
 			).trim()
 
@@ -150,11 +150,36 @@ pipeline {
 
                 tar czf ${PACKAGE_NAME} package
 		md5sum ${PACKAGE_NAME} > ${PACKAGE_NAME}.md5
+		ls -lh ${PACKAGE_NAME}
                 '''
 
             }
 
         }
+
+
+	stage("Check Artifact") {
+
+	steps {
+
+	sh '''
+
+	echo "Current directory:"
+	pwd
+
+
+	echo "Files:"
+	ls -lh
+
+
+	echo "Package:"
+	ls -lh ${PACKAGE_NAME}
+
+	'''
+
+	}
+
+	}
 
         stage("Upload") {
             steps {
