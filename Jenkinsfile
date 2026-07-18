@@ -26,18 +26,21 @@ pipeline {
     stages {
 
 
-        stage("Checkout Redis") {
+	stage("Checkout Redis") {
 
-            steps {
+	    steps {
 
-                git(
-                    url:'https://github.com/redis/redis.git',
-                    branch:'unstable'
-                )
+		dir("redis") {
 
-            }
-        }
+		    git(
+			url:'https://github.com/redis/redis.git',
+			branch:'unstable'
+		    )
 
+		}
+
+	    }
+	}
 
         stage("Build") {
 
