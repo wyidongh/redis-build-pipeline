@@ -143,11 +143,11 @@ pipeline {
             steps {
                 sshagent(credentials: ['dong2-ssh-key']) {
                     sh """
-                    ssh ${env.ARTIFACT_USER}@${env.ARTIFACT_HOST} "
-                        cd ${env.ARTIFACT_DIR} 2>/dev/null || exit 0
+                    ssh ${ARTIFACT_USER}@${ARTIFACT_HOST} "
+                        cd ${ARTIFACT_DIR} 2>/dev/null || exit 0
                         echo 'Before cleanup:'
                         ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
-                        ls -t *.tar.gz | tail -n +$(( ${env.ARTIFACT_RETENTION} + 1 )) | xargs -r rm -f
+                        ls -t *.tar.gz | tail -n +$(( ${ARTIFACT_RETENTION} + 1 )) | xargs -r rm -f
                         for f in *.md5; do [ -f \\\"\\${f%.md5}\\\" ] || rm -f \\\"\\$f\\\" 2>/dev/null; done
                         echo 'After cleanup:'
                         ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
@@ -160,10 +160,10 @@ pipeline {
 
     post {
         success {
-            script { currentBuild.description = "${env.RELEASE_VERSION}" }
+            script { currentBuild.description = "${RELEASE_VERSION}" }
         }
         always {
-            archiveArtifacts artifacts: "${env.PACKAGE_NAME}, ${env.PACKAGE_NAME}.md5", allowEmptyArchive: true
+            archiveArtifacts artifacts: "${PACKAGE_NAME}, ${PACKAGE_NAME}.md5", allowEmptyArchive: true
         }
     }
 }
