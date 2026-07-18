@@ -18,6 +18,10 @@ pipeline {
 
         PACKAGE_NAME="redis_1_0_1.tar.gz"
 
+	APP_NAME="redis"
+
+    	APP_VERSION="1.0"
+
         ARTIFACT_HOST="192.168.79.134"
 
         ARTIFACT_USER="dong2"
@@ -52,40 +56,52 @@ pipeline {
                       branch:"unstable"
                     )
 
-                }
+		    script {
 
+			env.GIT_COMMIT_ID = sh(
+			    script:"git rev-parse --short HEAD",
+			    returnStdout:true
+			).trim()
+
+
+			echo "Git Commit: ${env.GIT_COMMIT_ID}"
+
+		    }
+
+                }
+		
             }
 	}
 
 
-        stage("Version") {
-            steps {
-                dir("redis") {
-                    script {
-                        // 一行命令获取所有版本变量
-                        def versionVars = sh(
-                            script: './scripts/version.sh ./redis ${BUILD_NUMBER}',
-                            returnStdout: true
-                        ).trim().split('\n')
-                        
-                        // 注入到 env
-                        versionVars.each { line ->
-                            def (key, value) = line.split('=', 2)
-                            env."${key}" = value
-                        }
-                    }
-                }
-                sh '''
-                echo "========== Version Info =========="
-                echo "Version:   ${VERSION}"
-                echo "Upstream:  ${UPSTREAM_VERSION}"
-                echo "Commit:    ${GIT_COMMIT_SHORT}"
-                echo "Branch:    ${GIT_BRANCH_NAME}"
-                echo "Package:   ${PACKAGE_NAME}"
-                echo "=================================="
-                '''
-            }
-        }
+
+	stage("Generate Version") {
+
+	    steps {
+
+		script {
+
+		    env.RELEASE_VERSION =
+		    "${APP_VERSION}.${BUILD_NUMBER}-${GIT_COMMIT_ID}"
+
+
+		    env.PACKAGE_NAME =
+		    "${APP_NAME}-${RELEASE_VERSION}.tar.gz"
+
+
+		    echo """
+		    Release Version:
+		    ${RELEASE_VERSION}
+
+		    Package:
+		    ${PACKAGE_NAME}
+		    """
+
+		}
+
+	    }
+
+	}
 
 
         stage("Build") {
@@ -121,6 +137,18 @@ pipeline {
 
                 cp redis/src/redis-server package/bin/
                 cp redis/src/redis-cli package/bin/
+
+		cat > package/build-info.json <<EOF
+		{
+		    "app": "${APP_NAME}",
+		    "version": "${RELEASE_VERSION}",
+		    "git_commit": "${GIT_COMMIT_ID}",
+		    "build_number": "${BUILD_NUMBER}",
+		    "build_image": "${IMAGE_TAG}",
+		    "build_time": "$(date '+%Y-%m-%d %H:%M:%S')",
+		    "builder": "Jenkins"
+		}
+		EOF
 
                 tar czf ${PACKAGE_NAME} package
 		md5sum ${PACKAGE_NAME} > ${PACKAGE_NAME}.md5
