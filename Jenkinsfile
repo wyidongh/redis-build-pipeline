@@ -65,24 +65,20 @@ pipeline {
 
         }
 
-
-       post {
-           success {
-               echo "CI PIPELINE SUCCESS ✅"
-           }
-   
-           failure {
-               echo "CI PIPELINE FAILED ❌"
-           }
-   
-           always {
-               echo "Always echo..."
-           }
-       }
-
-
-	
-
     }
 
+
+    post {
+       success {
+           echo "CI PIPELINE SUCCESS ✅"
+       }
+    
+       failure {
+           echo "CI PIPELINE FAILED ❌"
+       }
+    
+       always {
+           echo "Always echo..."
+       }
+    }
 }
