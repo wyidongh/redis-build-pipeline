@@ -8,6 +8,21 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
     }
 
+    parameters {
+    
+        string(
+            name: 'GIT_BRANCH',
+            defaultValue: 'unstable',
+            description: 'Redis branch'
+        )
+    
+        string(
+            name: 'GIT_URL',
+            defaultValue: 'https://github.com/wyidongh/redis.git'
+        )
+    }
+
+
     environment {
         IMAGE_TAG = "redis_build:1.0.1"
         APP_NAME = "redis"
@@ -30,8 +45,8 @@ pipeline {
             steps {
                 dir("redis") {
                     git(
-                        url: "https://github.com/wyidongh/redis.git",
-                        branch: "unstable"
+                        url: "${params.GIT_URL}",
+                        branch: "${params.GIT_BRANCH}"
                     )
                     script {
                         // 设置到 env，确保跨 stage 可用
