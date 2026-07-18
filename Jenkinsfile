@@ -147,7 +147,7 @@ pipeline {
 		    "builder": "Jenkins"
 		}
 		EOF
-
+		echo ${PACKAGE_NAME}
                 tar czf ${PACKAGE_NAME} package
 		md5sum ${PACKAGE_NAME} > ${PACKAGE_NAME}.md5
 		ls -lh ${PACKAGE_NAME}
@@ -224,7 +224,7 @@ pipeline {
 
     post {
         success {
-            script { currentBuild.description = "${VERSION}" }
+            script { currentBuild.description = "${RELEASE_VERSION}" }
         }
         always {
             archiveArtifacts artifacts: "${PACKAGE_NAME}, ${PACKAGE_NAME}.md5", allowEmptyArchive: true
