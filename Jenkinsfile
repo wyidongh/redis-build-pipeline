@@ -2,8 +2,9 @@ pipeline {
 
     agent any
 
-
+    
     options {
+	# 禁止Jenkins自动拉取代码（checkout scm), 手动stage checkout
         skipDefaultCheckout(true)
     }
 
@@ -25,16 +26,33 @@ pipeline {
 
 
     stages {
+	
+	# 开始checkout代码之前先清除workspace
+        stage("Clean Workspace") {
+
+            steps {
+
+                cleanWs()
+
+            }
+        }
 
 
-	stage("Checkout Redis") {
-	    steps {
-		sh '''
-		echo "SkipCheckout Redis"
+        stage("Checkout Redis") {
 
-		'''
-	    }
-	}	
+            steps {
+
+                dir("redis") {
+
+                    git(
+                      url:"https://github.com/wyidongh/redis.git",
+                      branch:"unstable"
+                    )
+
+                }
+
+            }
+	}
 
 
         stage("Build") {
