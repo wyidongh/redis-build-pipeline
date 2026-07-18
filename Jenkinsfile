@@ -114,56 +114,72 @@ pipeline {
             }
         }
 
-        stage("Upload") {
-            steps {
-                retry(3) {
-                    sshagent(credentials: ['dong2-ssh-key']) {
-                        sh """
-                        mkdir -p ~/.ssh
-                        ssh-keyscan -H ${env.ARTIFACT_HOST} >> ~/.ssh/known_hosts 2>/dev/null || true
-                        
-                        remote_dir="${env.ARTIFACT_DIR}"
-                        ssh ${env.ARTIFACT_USER}@${env.ARTIFACT_HOST} "mkdir -p \${remote_dir}"
-                        
-                        scp ${env.PACKAGE_NAME} ${env.PACKAGE_NAME}.md5 \
-                            ${env.ARTIFACT_USER}@${env.ARTIFACT_HOST}:\${remote_dir}/
-                        
-                        ssh ${env.ARTIFACT_USER}@${env.ARTIFACT_HOST} "
-                            cd \${remote_dir} && \
-                            ln -sf ${env.PACKAGE_NAME} latest.tar.gz && \
-                            ln -sf ${env.PACKAGE_NAME}.md5 latest.tar.gz.md5
-                        "
-                        """
-                    }
-                }
-            }
-        }
 
-        stage("Cleanup") {
-            steps {
-                sshagent(credentials: ['dong2-ssh-key']) {
-                    sh """
-                    ssh ${ARTIFACT_USER}@${ARTIFACT_HOST} "
-                        cd ${ARTIFACT_DIR} 2>/dev/null || exit 0
-                        echo 'Before cleanup:'
-                        ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
-                        ls -t *.tar.gz | tail -n +$(( ${ARTIFACT_RETENTION} + 1 )) | xargs -r rm -f
-                        for f in *.md5; do [ -f \\\"\\${f%.md5}\\\" ] || rm -f \\\"\\$f\\\" 2>/dev/null; done
-                        echo 'After cleanup:'
-                        ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
-                    "
-                    """
-                }
-            }
-        }
+	stage("Upload") {
+	    steps {
+		withEnv([
+		    "PACKAGE_NAME=${env.PACKAGE_NAME}",
+		    "ARTIFACT_DIR=${env.ARTIFACT_DIR}"
+		]) {
+		    retry(3) {
+			sshagent(credentials: ['dong2-ssh-key']) {
+			    sh '''
+			    mkdir -p ~/.ssh
+			    ssh-keyscan -H "${ARTIFACT_HOST}" >> ~/.ssh/known_hosts 2>/dev/null || true
+			    
+			    ssh "${ARTIFACT_USER}@${ARTIFACT_HOST}" "mkdir -p ${ARTIFACT_DIR}"
+			    
+			    scp "$PACKAGE_NAME" "$PACKAGE_NAME.md5" \
+				"${ARTIFACT_USER}@${ARTIFACT_HOST}:${ARTIFACT_DIR}/"
+			    
+			    ssh "${ARTIFACT_USER}@${ARTIFACT_HOST}" "
+				cd ${ARTIFACT_DIR} && \
+				ln -sf \"$PACKAGE_NAME\" latest.tar.gz && \
+				ln -sf \"$PACKAGE_NAME.md5\" latest.tar.gz.md5
+			    "
+			    '''
+			}
+		    }
+		}
+	    }
+	}
+
+	stage("Cleanup") {
+	    steps {
+		withEnv([
+		    "ARTIFACT_DIR=${env.ARTIFACT_DIR}",
+		    "ARTIFACT_RETENTION=${env.ARTIFACT_RETENTION}"
+		]) {
+		    sshagent(credentials: ['dong2-ssh-key']) {
+			sh '''
+			ssh "${ARTIFACT_USER}@${ARTIFACT_HOST}" "
+			    cd \"${ARTIFACT_DIR}\" 2>/dev/null || exit 0
+			    echo 'Before cleanup:'
+			    ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
+			    ls -t *.tar.gz | tail -n +$(( ARTIFACT_RETENTION + 1 )) | xargs -r rm -f
+			    for f in *.md5; do [ -f \"\\${f%.md5}\" ] || rm -f \"\\$f\" 2>/dev/null; done
+			    echo 'After cleanup:'
+			    ls -lt *.tar.gz 2>/dev/null || echo 'No packages'
+			"
+			'''
+		    }
+		}
+	    }
+	}
+
+
     }
 
     post {
         success {
-            script { currentBuild.description = "${RELEASE_VERSION}" }
+            script { currentBuild.description = env.RELEASE_VERSION }
         }
         always {
-            archiveArtifacts artifacts: "${PACKAGE_NAME}, ${PACKAGE_NAME}.md5", allowEmptyArchive: true
+            script {
+                def pkg = env.PACKAGE_NAME
+                archiveArtifacts artifacts: "${pkg}, ${pkg}.md5", allowEmptyArchive: true
+            }
         }
     }
+
 }
