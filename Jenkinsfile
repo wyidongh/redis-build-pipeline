@@ -1,72 +1,99 @@
 pipeline {
 
     agent any
-    environment {
-    	IMAGE_NAME = "redis_build"
-	VERSION = "1_0_1"	
-	IMAGE_TAG = "${IMAGE_NAME}:${VERSION}"
-	PACKAGE_NAME = "redis_${VERSION}.tar.gz"
-	ARTIFACT_HOST = "192.168.79.134"
-	ARTIFACT_USER = "dong2"
-	ARTIFACT_DIR = "/home/${ARTIFACT_USER}/artifacts"
+
+
+    options {
+        skipDefaultCheckout(true)
     }
+
+
+    environment {
+
+        IMAGE_TAG="redis_build:1.0.1"
+
+        PACKAGE_NAME="redis_1_0_1.tar.gz"
+
+        ARTIFACT_HOST="192.168.79.134"
+
+        ARTIFACT_USER="dong2"
+
+        ARTIFACT_DIR="/home/dong2/artifacts"
+
+    }
+
 
     stages {
 
-        stage("Checkout") {
+
+        stage("Checkout Redis") {
 
             steps {
 
-                git 'https://github.com/redis/redis.git'
+                git(
+                    url:'https://github.com/redis/redis.git',
+                    branch:'unstable'
+                )
+
+            }
+        }
+
+
+        stage("Build") {
+
+            steps {
+
+                sh '''
+
+                docker run --rm \
+                -v $WORKSPACE:/workspace \
+                -w /workspace \
+                ${IMAGE_TAG} \
+                make -j$(nproc)
+
+                '''
 
             }
 
         }
-
-	
-        stage("Build") {
-
-            steps {
-		sh '''
-		docker run --rm \
-		-v $WORKSPACE:/workspace \
-		-w /workspace \
-		${IMAGE_TAG}
-		make -j$(nproc)
-		'''
-            }
-	}
 
 
         stage("Package") {
 
             steps {
 
-		sh '''
-		mkdir -p package/bin \
-		cp src/redis-server package/bin/
+                sh '''
+
+                mkdir -p package/bin
+
+                cp src/redis-server package/bin/
                 cp src/redis-cli package/bin/
-	
-                tar czf $PACKAGE_NAME package
-		'''
+
+                tar czf ${PACKAGE_NAME} package
+
+                '''
+
             }
 
         }
 
 
-        stage("Archive") {
+        stage("Upload Artifact") {
 
             steps {
 
-		sh '''
-                scp $PACKAGE_NAME $ARTIFACT_USER@$ARTIFACT_HOST:$ARTIFACT_DIR
-		'''
+                sh '''
+
+                scp ${PACKAGE_NAME} \
+                ${ARTIFACT_USER}@${ARTIFACT_HOST}:${ARTIFACT_DIR}
+
+                '''
+
             }
 
         }
 
     }
-
 
     post {
        success {
@@ -81,4 +108,5 @@ pipeline {
            echo "Always echo..."
        }
     }
+
 }
