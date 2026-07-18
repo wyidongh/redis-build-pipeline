@@ -102,18 +102,16 @@ pipeline {
 
 
         stage("Upload Artifact") {
-
             steps {
-
-                sh '''
-
-                scp ${PACKAGE_NAME} \
-                ${ARTIFACT_USER}@${ARTIFACT_HOST}:${ARTIFACT_DIR}
-
-                '''
-
+                sshagent(credentials: ['dong2-ssh-key']) {
+                    sh '''
+                    scp -o StrictHostKeyChecking=no \
+                    -o UserKnownHostsFile=/dev/null \
+                    ${PACKAGE_NAME} \
+                    ${ARTIFACT_USER}@${ARTIFACT_HOST}:${ARTIFACT_DIR}
+                    '''
+                }
             }
-
         }
 
     }
