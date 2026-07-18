@@ -64,7 +64,7 @@ pipeline {
                     script {
                         // 一行命令获取所有版本变量
                         def versionVars = sh(
-                            script: '../scripts/version.sh full ${BUILD_NUMBER}',
+                            script: './scripts/version.sh ./redis ${BUILD_NUMBER}',
                             returnStdout: true
                         ).trim().split('\n')
                         
