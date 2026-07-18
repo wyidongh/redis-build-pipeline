@@ -3,8 +3,8 @@ pipeline {
     agent any
 
     
+    // 禁止Jenkins自动拉取代码（checkout scm), 手动stage checkout
     options {
-	# 禁止Jenkins自动拉取代码（checkout scm), 手动stage checkout
         skipDefaultCheckout(true)
     }
 
@@ -27,7 +27,7 @@ pipeline {
 
     stages {
 	
-	# 开始checkout代码之前先清除workspace
+	// 开始checkout代码之前先清除workspace
         stage("Clean Workspace") {
 
             steps {
