@@ -27,10 +27,12 @@ pipeline {
 
 
 	stage("Checkout Redis") {
+	    steps {
 		sh '''
 		echo "SkipCheckout Redis"
 
 		'''
+	    }
 	}	
 
 	stage("Debug") {
