@@ -42,6 +42,22 @@ pipeline {
 	    }
 	}
 
+	stage("Debug") {
+	    steps {
+		sh '''
+		echo "==== workspace ===="
+		pwd
+
+		echo "==== ls ===="
+		ls -al
+
+		echo "==== find Makefile ===="
+		find . -name Makefile
+		'''
+	    }
+	}
+
+
         stage("Build") {
 
             steps {
