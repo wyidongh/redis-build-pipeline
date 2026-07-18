@@ -16,8 +16,6 @@ pipeline {
 
         IMAGE_TAG="redis_build:1.0.1"
 
-        PACKAGE_NAME="redis_1_0_1.tar.gz"
-
 	APP_NAME="redis"
 
     	APP_VERSION="1.0"
