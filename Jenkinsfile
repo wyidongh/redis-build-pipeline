@@ -73,34 +73,34 @@ pipeline {
             }
         }
 
-        stage("Package") {
-            steps {
-                // 用双引号字符串，让 Groovy 插值
-                sh """
-                mkdir -p package/bin
-                
-                cp redis/src/redis-server package/bin/
-                cp redis/src/redis-cli package/bin/
-                
-                cat > package/build-info.json <<'EOF'
-                {
-                    "app": "${env.APP_NAME}",
-                    "version": "${env.RELEASE_VERSION}",
-                    "git_commit": "${env.GIT_COMMIT_ID}",
-                    "build_number": "${env.BUILD_NUMBER}",
-                    "build_image": "${env.IMAGE_TAG}",
-                    "build_time": "$(date '+%Y-%m-%d %H:%M:%S')",
-                    "builder": "Jenkins"
-                }
-                EOF
-                
-                echo "Packaging: ${env.PACKAGE_NAME}"
-                tar czf ${env.PACKAGE_NAME} package
-                md5sum ${env.PACKAGE_NAME} > ${env.PACKAGE_NAME}.md5
-                ls -lh ${env.PACKAGE_NAME}
-                """
-            }
-        }
+
+	stage("Package") {
+	    steps {
+		script {
+		    def buildInfo = """{
+	    "app": "${env.APP_NAME}",
+	    "version": "${env.RELEASE_VERSION}",
+	    "git_commit": "${env.GIT_COMMIT_ID}",
+	    "build_number": "${env.BUILD_NUMBER}",
+	    "build_image": "${env.IMAGE_TAG}",
+	    "build_time": "${new Date().format('yyyy-MM-dd HH:mm:ss')}",
+	    "builder": "Jenkins"
+	}"""
+		    writeFile file: 'package/build-info.json', text: buildInfo
+		}
+		
+		sh """
+		mkdir -p package/bin
+		cp redis/src/redis-server package/bin/
+		cp redis/src/redis-cli package/bin/
+		
+		echo "Packaging: ${env.PACKAGE_NAME}"
+		tar czf ${env.PACKAGE_NAME} package
+		md5sum ${env.PACKAGE_NAME} > ${env.PACKAGE_NAME}.md5
+		ls -lh ${env.PACKAGE_NAME}
+		"""
+	    }
+	}
 
         stage("Check Artifact") {
             steps {
