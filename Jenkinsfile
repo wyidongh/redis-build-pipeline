@@ -36,21 +36,6 @@ pipeline {
 	    }
 	}	
 
-	stage("Debug") {
-	    steps {
-		sh '''
-		echo "==== workspace ===="
-		pwd
-
-		echo "==== ls ===="
-		ls -al
-
-		echo "==== find Makefile ===="
-		find . -name Makefile
-		'''
-	    }
-	}
-
 
         stage("Build") {
 
@@ -61,12 +46,6 @@ pipeline {
 		# 计算宿主机上的绝对路径
                 HOST_WORKSPACE="${HOST_JENKINS_HOME}/workspace/${JOB_NAME}"
                 echo "Host workspace: $HOST_WORKSPACE"
-
-		docker run --rm \
-		-v ${HOST_WORKSPACE}:/workspace \
-		-w /workspace \
-		${IMAGE_TAG} \
-		sh -c "pwd && ls -la && cat Makefile | head -5"
 
                 docker run --rm \
                 -v ${HOST_WORKSPACE}:/workspace \
