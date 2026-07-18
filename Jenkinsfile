@@ -50,7 +50,7 @@ pipeline {
 
                 docker run --rm \
                 -v $WORKSPACE:/workspace \
-                -w /workspace \
+                -w /workspace/redis \
                 ${IMAGE_TAG} \
                 make -j$(nproc)
 
@@ -69,8 +69,8 @@ pipeline {
 
                 mkdir -p package/bin
 
-                cp src/redis-server package/bin/
-                cp src/redis-cli package/bin/
+                cp redis/src/redis-server package/bin/
+                cp redis/src/redis-cli package/bin/
 
                 tar czf ${PACKAGE_NAME} package
 
