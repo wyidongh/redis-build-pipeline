@@ -57,6 +57,12 @@ pipeline {
 
                 sh '''
 
+		docker run --rm \
+		-v $WORKSPACE:/workspace \
+		-w /workspace \
+		${IMAGE_TAG} \
+		sh -c "pwd && ls -la && cat Makefile | head -5"
+
                 docker run --rm \
                 -v $WORKSPACE:/workspace \
                 -w /workspace \
