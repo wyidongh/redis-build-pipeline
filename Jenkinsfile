@@ -20,6 +20,7 @@ pipeline {
 
         ARTIFACT_DIR="/home/dong2/artifacts"
 
+	HOST_JENKINS_HOME = "/home/dong/devops/jenkins_home"
     }
 
 
@@ -57,14 +58,18 @@ pipeline {
 
                 sh '''
 
+		# 计算宿主机上的绝对路径
+                HOST_WORKSPACE="${HOST_JENKINS_HOME}/workspace/${JOB_NAME}"
+                echo "Host workspace: $HOST_WORKSPACE"
+
 		docker run --rm \
-		-v $WORKSPACE:/workspace \
+		-v ${HOST_WORKSPACE}:/workspace \
 		-w /workspace \
 		${IMAGE_TAG} \
 		sh -c "pwd && ls -la && cat Makefile | head -5"
 
                 docker run --rm \
-                -v $WORKSPACE:/workspace \
+                -v ${HOST_WORKSPACE}:/workspace \
                 -w /workspace \
                 ${IMAGE_TAG} \
                 make -j$(nproc)
