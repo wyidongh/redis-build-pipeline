@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+    	label 'redis-build'
+    }
 
     options {
         skipDefaultCheckout(true)
@@ -30,7 +32,7 @@ pipeline {
         ARTIFACT_HOST = "192.168.79.134"
         ARTIFACT_USER = "dong2"
         ARTIFACT_DIR = "/home/dong2/artifacts"
-        HOST_JENKINS_HOME = "/home/dong/devops/jenkins_home"
+        // HOST_JENKINS_HOME = "/home/dong/devops/jenkins_home"
         ARTIFACT_RETENTION = "10"  // ← 补上
     }
 
@@ -76,11 +78,9 @@ pipeline {
         stage("Build") {
             steps {
                 sh '''
-                HOST_WORKSPACE="${HOST_JENKINS_HOME}/workspace/${JOB_NAME}"
-                echo "Host workspace: $HOST_WORKSPACE"
-                
+               	pwd 
                 docker run --rm \
-                    -v ${HOST_WORKSPACE}:/workspace \
+                    -v ${WORKSPACE}:/workspace \
                     -w /workspace/redis \
                     ${IMAGE_TAG} \
                     make -j$(nproc)
