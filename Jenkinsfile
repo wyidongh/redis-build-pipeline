@@ -109,7 +109,7 @@ pipeline {
 	}
 
 
-        stage("Test") {
+        stage("Unit Test") {
             when {
                 expression { !params.SKIP_TESTS }
             }
@@ -120,7 +120,7 @@ pipeline {
                 -v ${WORKSPACE}:/workspace \
                 -w /workspace/redis \
                 ${IMAGE_TAG} \
-                make test
+                make test-unit 
                 '''
             }
             post {
