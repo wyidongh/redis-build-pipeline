@@ -56,24 +56,30 @@ pipeline {
             }
         }
 
-        stage("Checkout Redis") {
-            steps {
-                dir("redis") {
-                    git(
-                        url: "${params.GIT_URL}",
-                        branch: "${params.GIT_BRANCH}"
-                    )
-                    script {
-                        // 设置到 env，确保跨 stage 可用
-                        env.GIT_COMMIT_ID = sh(
-                            script: "git rev-parse --short=7 HEAD",
-                            returnStdout: true
-                        ).trim()
-                        echo "Git Commit: ${env.GIT_COMMIT_ID}"
-                    }
-                }
-            }
-        }
+
+	stage("Checkout Redis") {
+	    steps {
+		dir("redis") {
+		    checkout([
+			$class: 'GitSCM',
+			branches: [[name: "*/${params.GIT_BRANCH}"]],
+			extensions: [
+			    [$class: 'CloneOption', depth: 1, noTags: true, shallow: true],
+			    [$class: 'CheckoutOption', timeout: 30]
+			],
+			userRemoteConfigs: [[url: "${params.GIT_URL}"]]
+		    ])
+		    script {
+			env.GIT_COMMIT_ID = sh(
+			    script: "git rev-parse --short=7 HEAD",
+			    returnStdout: true
+			).trim()
+			echo "Git Commit: ${env.GIT_COMMIT_ID}"
+		    }
+		}
+	    }
+	}
+
 
         stage("Generate Version") {
             steps {
