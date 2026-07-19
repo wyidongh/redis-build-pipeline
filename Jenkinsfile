@@ -82,6 +82,7 @@ pipeline {
                 docker run --rm \
                     -v $(pwd):/workspace \
                     -w /workspace/redis \
+		    --user root \
                     ${IMAGE_TAG} \
                     make -j$(nproc)
                 '''
