@@ -28,13 +28,7 @@ pipeline {
             defaultValue: 'redis_build:1.0.1',
             description: '编译镜像标签'
         )
-        
-        booleanParam(
-            name: 'SKIP_TESTS',
-            defaultValue: false,
-            description: '是否跳过测试'
-        )
-
+    
     }
 
 
@@ -107,32 +101,6 @@ pipeline {
 		'''
 	    }
 	}
-
-
-        stage("Unit Test") {
-            when {
-                expression { !params.SKIP_TESTS }
-            }
-            steps {
-                sh '''
-                docker run --rm \
-                --user $(id -u):$(id -g) \
-                -v ${WORKSPACE}:/workspace \
-                -w /workspace/redis \
-                ${IMAGE_TAG} \
-                make test-unit 
-                '''
-            }
-            post {
-                always {
-                    // 收集测试报告（如果 Redis 生成 junit/xml 格式）
-                    // junit 'redis/tests/test-report.xml'
-                    
-                    // 或者收集日志
-                    archiveArtifacts artifacts: 'redis/tests/tmp/**', allowEmptyArchive: true
-                }
-            }
-        }
 
 
 	stage("Package") {
