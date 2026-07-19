@@ -22,11 +22,24 @@ pipeline {
             name: 'GIT_URL',
             defaultValue: 'https://github.com/wyidongh/redis.git'
         )
+
+        string(
+            name: 'BUILD_IMAGE_TAG',
+            defaultValue: 'redis_build:1.0.1',
+            description: '编译镜像标签'
+        )
+        
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: '是否跳过测试'
+        )
+
     }
 
 
     environment {
-        IMAGE_TAG = "redis_build:1.0.1"
+        IMAGE_TAG = "${params.BUILD_IMAGE_TAG}" 
         APP_NAME = "redis"
         APP_VERSION = "1.0"
         ARTIFACT_HOST = "192.168.79.134"
@@ -75,17 +88,43 @@ pipeline {
             }
         }
 
-        stage("Build") {
+
+	stage("Build") {
+	    steps {
+		sh '''
+		docker run --rm \
+		--user $(id -u):$(id -g) \
+		-v ${WORKSPACE}:/workspace \
+		-w /workspace/redis \
+		${IMAGE_TAG} \
+		make -j$(nproc)
+		'''
+	    }
+	}
+
+
+        stage("Test") {
+            when {
+                expression { !params.SKIP_TESTS }
+            }
             steps {
                 sh '''
-               	pwd 
                 docker run --rm \
-                    -v $(pwd):/workspace \
-                    -w /workspace/redis \
-		    --user root \
-                    ${IMAGE_TAG} \
-                    make -j$(nproc)
+                --user $(id -u):$(id -g) \
+                -v ${WORKSPACE}:/workspace \
+                -w /workspace/redis \
+                ${IMAGE_TAG} \
+                make test
                 '''
+            }
+            post {
+                always {
+                    // 收集测试报告（如果 Redis 生成 junit/xml 格式）
+                    // junit 'redis/tests/test-report.xml'
+                    
+                    // 或者收集日志
+                    archiveArtifacts artifacts: 'redis/tests/tmp/**', allowEmptyArchive: true
+                }
             }
         }
 
