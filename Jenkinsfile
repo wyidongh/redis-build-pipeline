@@ -149,7 +149,7 @@ pipeline {
         }
 
 
-	stage("Upload") {
+	stage("Upload to Server") {
 	    steps {
 		withEnv([
 		    "PACKAGE_NAME=${env.PACKAGE_NAME}",
@@ -177,6 +177,20 @@ pipeline {
 		}
 	    }
 	}
+
+
+        stage("Upload to Nexus") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-admin', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                    curl -u ${NEXUS_USER}:${NEXUS_PASS} \
+                        --upload-file ${PACKAGE_NAME} \
+                        http://192.168.79.134:8081/repository/redis-releases/redis/${RELEASE_VERSION}/${PACKAGE_NAME}
+                    """
+                }
+            }
+	}
+
 
 	stage("Cleanup") {
 	    steps {
