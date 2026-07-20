@@ -179,16 +179,26 @@ pipeline {
 	}
 
 
-        stage("Upload to Nexus") {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-admin', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh """
-                    curl -u ${NEXUS_USER}:${NEXUS_PASS} \
-                        --upload-file ${PACKAGE_NAME} \
-                        http://192.168.79.134:8081/repository/redis-releases/redis/${RELEASE_VERSION}/${PACKAGE_NAME}
-                    """
-                }
-            }
+	stage("Upload to Nexus") {
+	    steps {
+		withCredentials([usernamePassword(credentialsId: 'nexus-admin', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+		    withEnv([
+			"NEXUS_URL=http://192.168.79.134:8081/repository/redis-releases",
+			"RELEASE_VERSION=${env.RELEASE_VERSION}",
+			"PACKAGE_NAME=${env.PACKAGE_NAME}"
+		    ]) {
+			sh '''
+			curl -u ${NEXUS_USER}:${NEXUS_PASS} \
+			    --upload-file ${PACKAGE_NAME} \
+			    ${NEXUS_URL}/redis/${RELEASE_VERSION}/${PACKAGE_NAME}
+			
+			curl -u ${NEXUS_USER}:${NEXUS_PASS} \
+			    --upload-file ${PACKAGE_NAME}.md5 \
+			    ${NEXUS_URL}/redis/${RELEASE_VERSION}/${PACKAGE_NAME}.md5
+			'''
+		    }
+		}
+	    }
 	}
 
 
