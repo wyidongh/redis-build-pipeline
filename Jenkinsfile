@@ -28,6 +28,11 @@ pipeline {
             defaultValue: 'redis_build:1.0.1',
             description: '编译镜像标签'
         )
+
+	booleanParam(
+		name: 'AUTO_TRIGGER_TEST',
+		defaultValue: true,
+		description: '构建成功后是否自动触发测试流水线'
     
     }
 
@@ -202,6 +207,23 @@ pipeline {
     post {
         success {
             script { currentBuild.description = env.RELEASE_VERSION }
+	    
+            script {
+                if (params.AUTO_TRIGGER_TEST) {
+                    build(
+                        job: 'redis-test-pipeline',
+                        parameters: [
+                            string(name: 'BUILD_VERSION', value: env.RELEASE_VERSION),
+                            string(name: 'ARTIFACT_HOST', value: env.ARTIFACT_HOST)
+                        ],
+                        wait: false
+                    )
+                    echo "Triggered redis-test-pipeline for version ${env.RELEASE_VERSION}"
+                } else {
+                    echo "Auto-trigger disabled, skipping test pipeline"
+                }
+            }
+
         }
         always {
             script {
