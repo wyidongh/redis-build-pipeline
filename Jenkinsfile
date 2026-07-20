@@ -33,7 +33,7 @@ pipeline {
 		name: 'AUTO_TRIGGER_TEST',
 		defaultValue: true,
 		description: '构建成功后是否自动触发测试流水线'
-    
+   	) 
     }
 
 
